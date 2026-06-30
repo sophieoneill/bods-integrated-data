@@ -126,9 +126,23 @@ export const insertNptgData = async (dbClient: KyselyDb, data: NptgSchema) => {
     const localityChunks = chunkArray(localities, 3000);
 
     await Promise.all([
-        dbClient.insertInto("nptg_admin_area_new").values(adminAreas).execute(),
-        localityChunks.map((chunk) => dbClient.insertInto("nptg_locality_new").values(chunk).execute()),
-        dbClient.insertInto("nptg_region_new").values(regions).execute(),
+        dbClient
+            .insertInto("nptg_admin_area_new")
+            .values(adminAreas)
+            .onConflict((oc) => oc.doNothing())
+            .execute(),
+        localityChunks.map((chunk) =>
+            dbClient
+                .insertInto("nptg_locality_new")
+                .values(chunk)
+                .onConflict((oc) => oc.doNothing())
+                .execute(),
+        ),
+        dbClient
+            .insertInto("nptg_region_new")
+            .values(regions)
+            .onConflict((oc) => oc.doNothing())
+            .execute(),
     ]);
 };
 
